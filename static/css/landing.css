@@ -1,0 +1,246 @@
+/* Hero — landing page only */
+
+.l-hero {
+    padding: 4.5rem 2rem 5rem;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Pill badge */
+
+.l-hero-center {
+    max-width: 640px;
+    margin: 0 auto 3.5rem;
+}
+
+.l-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--accent-light);
+    border: 1px solid #c5dbd0;
+    border-radius: 999px;
+    padding: 0.4rem 1.1rem;
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 2.25rem;
+}
+
+.l-pill-dot { font-size: 0.6rem; }
+
+/* Heading */
+
+.l-heading {
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 6vw, 4.2rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 1.5rem;
+}
+
+.l-heading-accent {
+    display: block;
+    color: var(--accent);
+}
+
+/* Subtitle */
+
+.l-subtitle {
+    font-size: 1.05rem;
+    color: var(--ink-muted);
+    line-height: 1.75;
+    margin-bottom: 2.5rem;
+}
+
+/* Buttons */
+
+.l-btns {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.l-btn {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.85rem 2rem;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.l-btn:hover { background: var(--accent); }
+
+/* Browser mock */
+
+.l-browser {
+    background: var(--paper-warm);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    text-align: left;
+    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.07);
+}
+
+.l-browser-dots {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.l-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.l-dot-red    { background: #ff5f57; }
+.l-dot-yellow { background: #ffbd2e; }
+.l-dot-green  { background: #28c840; }
+
+/* Stat cards */
+
+.l-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.l-stat-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+}
+
+.l-stat-label {
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    margin-bottom: 0.35rem;
+}
+
+.l-stat-value {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    color: var(--ink);
+    line-height: 1.1;
+    margin-bottom: 0.2rem;
+}
+
+.l-stat-sub       { font-size: 0.8rem; color: var(--ink-muted); }
+.l-sub-red        { color: var(--danger); }
+.l-sub-green      { color: var(--accent); }
+
+/* Bar chart */
+
+.l-bars {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.l-bar-row {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    align-items: center;
+    gap: 1rem;
+}
+
+.l-bar-label {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    text-align: right;
+}
+
+.l-bar-track {
+    height: 8px;
+    background: var(--border-soft);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.l-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+}
+
+.l-bar-orange { background: var(--accent-2); }
+.l-bar-blue   { background: #4a90d9; }
+.l-bar-purple { background: #7c6bc9; }
+
+/* Responsive */
+
+@media (max-width: 600px) {
+    .l-stats { grid-template-columns: 1fr; }
+    .l-heading { font-size: 2.4rem; }
+    .l-subtitle br { display: none; }
+}
+
+/* Modal */
+
+.l-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.l-modal-overlay.is-open { display: flex; }
+
+.l-modal {
+    background: #000;
+    border-radius: var(--radius-lg);
+    position: relative;
+    width: 100%;
+    max-width: 860px;
+}
+
+.l-modal-close {
+    position: absolute;
+    top: -2.75rem;
+    right: 0;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.l-modal-close:hover { opacity: 1; }
+
+.l-modal-video {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+}
+
+.l-modal-video iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
