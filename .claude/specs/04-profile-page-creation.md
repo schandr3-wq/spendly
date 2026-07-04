@@ -1,79 +1,54 @@
-# Spec: Profile Page Creation
+# Spec: Profile Page
 
 ## Overview
-Implement the user profile page — the first authenticated page in Spendly. This step replaces the `profile()` placeholder with a real page where a logged-in user can see their account details (name, email, member-since date), update their name and email, and change their password. Because this is the first route that requires authentication, this step also introduces a reusable `login_required` decorator that every later logged-in feature (dashboard, expenses) will use. The navbar user name added in Step 03 becomes a link to this page.
+This feature replaces the `/profile` stub with a fully designed profile page showing static, hardcoded data. The goal is to establish the complete UI layout — user info card, transaction history table, summary stats, and category breakdown — before any real database queries are wired up in Step 5. Building the UI first lets the team validate the design in isolation and ensures the templates are ready for the backend-connection step.
 
 ## Depends on
-- Step 01 — Database setup (`users` table, `get_db()`)
-- Step 02 — Registration (`create_user()`, flash block in `base.html`, `.flash-*` CSS)
-- Step 03 — Login and Logout (`session['user_id']` / `session['user_name']`, `get_user_by_email()`, session-aware navbar)
+- Step 1: Database setup (schema must exist)
+- Step 2: Registration (user accounts must be creatable)
+- Step 3: Login + Logout (session must be set; `/profile` must be a protected route)
 
 ## Routes
-- `GET /profile` — render profile page with current user details and both forms — logged-in
-- `POST /profile` — update the user's name and email — logged-in
-- `POST /profile/password` — change the user's password — logged-in
-
-Unauthenticated access to any of these redirects to `url_for('login')` with a flashed message.
+- GET /profile — render the profile page — logged-in only (redirect to /login if not authenticated)
 
 ## Database changes
-No new tables or columns. The existing `users` table covers all requirements.
-
-New DB helpers must be added to `database/db.py` (same open/`finally`-close pattern as `create_user()` / `get_user_by_email()`):
-- `get_user_by_id(user_id)` — parameterised `SELECT` on `users` by id; returns the row or `None`.
-- `update_user(user_id, name, email)` — parameterised `UPDATE` of name and email; raises `sqlite3.IntegrityError` if the email is taken by another user (UNIQUE constraint).
-- `update_user_password(user_id, password)` — hashes with `generate_password_hash` and updates `password_hash`.
+No database changes. The existing `users` and `expenses` tables are sufficient.
 
 ## Templates
-- **Create:** `templates/profile.html`
-  - Extends `base.html`
-  - Shows the user's name, email, and account creation date (from `created_at`)
-  - "Account details" form: `name`, `email` inputs, posting to `url_for('profile')`
-  - "Change password" form: `current_password`, `new_password`, `confirm_password` inputs, posting to `url_for('profile_password')`
-  - Reuse the existing form design language: `.auth-card`, `.form-group`, `.form-input`, `.btn-submit` (consistent with `login.html` / `register.html`)
-- **Modify:** `templates/base.html`
-  - The logged-in user name in the navbar (`.nav-user`) becomes a link to `url_for('profile')`
+- Create: `templates/profile.html` — full profile page extending `base.html`; contains four sections:
+  1. **User info card** — avatar initials, name, email, member-since date (all hardcoded)
+  2. **Summary stats row** — total spent, number of transactions, top category (hardcoded)
+  3. **Transaction history table** — list of recent expenses with date, description, category badge, amount (hardcoded rows)
+  4. **Category breakdown** — per-category totals displayed as a simple list or progress-bar rows (hardcoded)
 
 ## Files to change
-- `app.py` — add `login_required` decorator (`functools.wraps`); replace the `profile()` placeholder with GET/POST handling; add `profile_password()` route
-- `database/db.py` — add `get_user_by_id()`, `update_user()`, `update_user_password()`
-- `templates/base.html` — navbar user name links to profile
-- `static/css/style.css` — profile-page styles only if needed (reuse `.auth-*` / form classes first; any additions must use CSS variables)
+- `app.py` — replace the `/profile` stub with a real view function that:
+  - Redirects unauthenticated users to `/login`
+  - Passes hardcoded context variables to `profile.html`
 
 ## Files to create
 - `templates/profile.html`
 
 ## New dependencies
-No new dependencies. Uses `functools.wraps` (standard library) and `werkzeug.security` (already installed).
+No new dependencies.
 
 ## Rules for implementation
-- No SQLAlchemy or ORMs
-- Parameterised queries only — never use f-strings in SQL
-- Passwords hashed with werkzeug — verify the current password with `check_password_hash`; hash the new one with `generate_password_hash`
+- No SQLAlchemy or ORMs — use raw sqlite3 via `get_db()` if any DB call is ever needed
+- Parameterised queries only — never string-format SQL
+- Passwords hashed with werkzeug (no changes to auth in this step)
 - Use CSS variables — never hardcode hex values
 - All templates extend `base.html`
-- Use `url_for()` for every internal link — never hardcode URLs
-- `login_required` decorator: if `session.get('user_id')` is missing, flash "Please sign in to continue." (`error`) and `redirect(url_for('login'))`; use `functools.wraps` so route names are preserved
-- Always load the user fresh with `get_user_by_id(session['user_id'])` on each request — do not trust stale session data for display; if the id no longer exists in the DB, clear the session and redirect to login
-- Account details validation (POST `/profile`):
-  1. Name and email must be non-empty ("All fields are required.")
-  2. Email taken by another user → catch `sqlite3.IntegrityError`, flash "Email already registered."
-  3. On success, update `session['user_name']` so the navbar reflects the new name immediately, flash a success message
-- Change password validation (POST `/profile/password`):
-  1. All three fields non-empty ("All fields are required.")
-  2. `current_password` must match the stored hash ("Current password is incorrect.")
-  3. `new_password == confirm_password` ("Passwords do not match.")
-  4. On success, flash "Password updated." — the user stays logged in
-- POST-redirect-GET everywhere: on success AND on any validation failure, flash the message (`success` / `error` category) and `redirect(url_for('profile'))` — never render a page directly as the response to a POST (a re-render would strand the browser on the POST-only `/profile/password` URL, where a refresh resubmits and a direct GET returns 405)
-- Use `abort(405)` if an unsupported HTTP method reaches a route
+- No inline styles
+- Authentication guard: check `session.get("user_id")`; if absent, `redirect(url_for("login"))`
+- All data passed to the template must be hardcoded Python dicts/lists in `app.py` — no DB queries in this step
+- Category badges must use a CSS class, not inline colour styles
 
 ## Definition of done
-- [ ] Visiting `/profile` while logged out redirects to `/login` with "Please sign in to continue."
-- [ ] Visiting `/profile` while logged in renders the page showing the user's name, email, and member-since date
-- [ ] The navbar user name links to `/profile` when logged in
-- [ ] Submitting new valid name/email updates the row in `users`, updates the navbar name immediately, and shows a success flash
-- [ ] Submitting an email already used by another user shows "Email already registered." and changes nothing
-- [ ] Submitting empty name or email shows a validation error and changes nothing
-- [ ] Changing the password with the correct current password succeeds; the user can log out and log back in with the new password only
-- [ ] Changing the password with a wrong current password shows "Current password is incorrect." and the old password still works
-- [ ] Mismatched new/confirm passwords show "Passwords do not match." and the old password still works
-- [ ] After any form submission — success or validation failure — the browser lands on a clean GET of `/profile` (POST-redirect-GET; no resubmission warning on refresh, no stranded `/profile/password` URL)
+- [ ] Visiting `/profile` without being logged in redirects to `/login`
+- [ ] Visiting `/profile` while logged in returns HTTP 200
+- [ ] The page displays a user info card with a name and email
+- [ ] The page displays at least three summary stat values (e.g. total spent, transaction count, top category)
+- [ ] The page displays a transaction history table with at least three hardcoded rows
+- [ ] The page displays a category breakdown section with at least three categories
+- [ ] The navbar shows the logged-in state (username + logout link)
+- [ ] No hex colour values appear in `profile.html` — only CSS variables

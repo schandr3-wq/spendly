@@ -13,16 +13,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash
 
-from database.db import (
-    create_user,
-    get_db,
-    get_user_by_email,
-    get_user_by_id,
-    init_db,
-    seed_db,
-    update_user,
-    update_user_password,
-)
+from database.db import create_user, get_db, get_user_by_email, init_db, seed_db
 
 app = Flask(__name__)
 app.secret_key = "spendly-dev-secret-key"
@@ -41,11 +32,6 @@ def login_required(view):
             return redirect(url_for("login"))
         return view(*args, **kwargs)
     return wrapped
-
-
-def current_user():
-    """Return the signed-in user's row, or None if the account is gone."""
-    return get_user_by_id(session["user_id"])
 
 
 # ------------------------------------------------------------------ #
@@ -138,67 +124,49 @@ def logout():
     return redirect(url_for("login"))
 
 
-@app.route("/profile", methods=["GET", "POST"])
+# Hardcoded profile-page data — replaced with real queries in Step 5
+PROFILE_USER = {
+    "name": "Demo User",
+    "email": "demo@spendly.com",
+    "initials": "D",
+    "member_since": "2026-07-03",
+}
+
+PROFILE_STATS = {
+    "total_spent": 8340.25,
+    "transaction_count": 6,
+    "top_category": "Shopping",
+}
+
+PROFILE_TRANSACTIONS = [
+    {"date": "2026-07-01", "description": "Groceries for the week", "category": "Food", "amount": 1240.50},
+    {"date": "2026-06-28", "description": "Metro card top-up", "category": "Transport", "amount": 350.00},
+    {"date": "2026-06-25", "description": "Electricity bill", "category": "Bills", "amount": 2120.00},
+    {"date": "2026-06-21", "description": "Pharmacy", "category": "Health", "amount": 480.75},
+    {"date": "2026-06-18", "description": "Movie night", "category": "Entertainment", "amount": 650.00},
+    {"date": "2026-06-15", "description": "Running shoes", "category": "Shopping", "amount": 3499.00},
+]
+
+PROFILE_CATEGORIES = [
+    {"name": "Shopping", "total": 3499.00, "percent": 42},
+    {"name": "Bills", "total": 2120.00, "percent": 25},
+    {"name": "Food", "total": 1240.50, "percent": 15},
+    {"name": "Entertainment", "total": 650.00, "percent": 8},
+    {"name": "Health", "total": 480.75, "percent": 6},
+    {"name": "Transport", "total": 350.00, "percent": 4},
+]
+
+
+@app.route("/profile")
 @login_required
 def profile():
-    user = current_user()
-    if user is None:
-        session.clear()
-        flash("Please sign in to continue.", "error")
-        return redirect(url_for("login"))
-
-    if request.method == "GET":
-        return render_template("profile.html", user=user)
-
-    if request.method != "POST":
-        abort(405)
-
-    name = request.form.get("name", "").strip()
-    email = request.form.get("email", "").strip()
-
-    if not name or not email:
-        flash("All fields are required.", "error")
-        return redirect(url_for("profile"))
-
-    try:
-        update_user(user["id"], name, email)
-    except sqlite3.IntegrityError:
-        flash("Email already registered.", "error")
-        return redirect(url_for("profile"))
-
-    session["user_name"] = name
-    flash("Account details updated.", "success")
-    return redirect(url_for("profile"))
-
-
-@app.route("/profile/password", methods=["POST"])
-@login_required
-def profile_password():
-    user = current_user()
-    if user is None:
-        session.clear()
-        flash("Please sign in to continue.", "error")
-        return redirect(url_for("login"))
-
-    current_password = request.form.get("current_password", "")
-    new_password = request.form.get("new_password", "")
-    confirm_password = request.form.get("confirm_password", "")
-
-    if not current_password or not new_password or not confirm_password:
-        flash("All fields are required.", "error")
-        return redirect(url_for("profile"))
-
-    if not check_password_hash(user["password_hash"], current_password):
-        flash("Current password is incorrect.", "error")
-        return redirect(url_for("profile"))
-
-    if new_password != confirm_password:
-        flash("Passwords do not match.", "error")
-        return redirect(url_for("profile"))
-
-    update_user_password(user["id"], new_password)
-    flash("Password updated.", "success")
-    return redirect(url_for("profile"))
+    return render_template(
+        "profile.html",
+        user=PROFILE_USER,
+        stats=PROFILE_STATS,
+        transactions=PROFILE_TRANSACTIONS,
+        categories=PROFILE_CATEGORIES,
+    )
 
 
 @app.route("/expenses/add")

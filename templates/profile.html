@@ -6,66 +6,75 @@
 
 <section class="profile-section">
 
-    <div class="profile-header">
-        <div class="profile-avatar">{{ user['name'][0]|upper }}</div>
+    <div class="auth-card profile-user-card">
+        <div class="profile-avatar">{{ user.initials }}</div>
         <div>
-            <h1 class="profile-name">{{ user['name'] }}</h1>
-            <p class="profile-meta">Member since {{ user['created_at'][:10] }}</p>
+            <h1 class="profile-name">{{ user.name }}</h1>
+            <p class="profile-meta">{{ user.email }}</p>
+            <p class="profile-meta">Member since {{ user.member_since }}</p>
         </div>
     </div>
 
-    <div class="profile-grid">
-
-        <div class="auth-card">
-            <h2 class="profile-card-title">
-                <i data-lucide="user"></i>
-                Account details
-            </h2>
-            <form method="post" action="{{ url_for('profile') }}">
-                <div class="form-group">
-                    <label for="name">Full name</label>
-                    <input type="text" id="name" name="name"
-                           class="form-input" value="{{ user['name'] }}"
-                           required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email address</label>
-                    <input type="email" id="email" name="email"
-                           class="form-input" value="{{ user['email'] }}"
-                           required>
-                </div>
-                <button type="submit" class="btn-submit">Save changes</button>
-            </form>
+    <div class="profile-stats">
+        <div class="auth-card stat-card">
+            <p class="stat-label">Total spent</p>
+            <p class="stat-value">&#8377;{{ "%.2f"|format(stats.total_spent) }}</p>
         </div>
-
-        <div class="auth-card">
-            <h2 class="profile-card-title">
-                <i data-lucide="lock"></i>
-                Change password
-            </h2>
-            <form method="post" action="{{ url_for('profile_password') }}">
-                <div class="form-group">
-                    <label for="current_password">Current password</label>
-                    <input type="password" id="current_password" name="current_password"
-                           class="form-input" placeholder="Your current password"
-                           required>
-                </div>
-                <div class="form-group">
-                    <label for="new_password">New password</label>
-                    <input type="password" id="new_password" name="new_password"
-                           class="form-input" placeholder="Min. 8 characters"
-                           required>
-                </div>
-                <div class="form-group">
-                    <label for="confirm_password">Confirm new password</label>
-                    <input type="password" id="confirm_password" name="confirm_password"
-                           class="form-input" placeholder="Re-enter new password"
-                           required>
-                </div>
-                <button type="submit" class="btn-submit">Update password</button>
-            </form>
+        <div class="auth-card stat-card">
+            <p class="stat-label">Transactions</p>
+            <p class="stat-value">{{ stats.transaction_count }}</p>
         </div>
+        <div class="auth-card stat-card">
+            <p class="stat-label">Top category</p>
+            <p class="stat-value">{{ stats.top_category }}</p>
+        </div>
+    </div>
 
+    <div class="auth-card profile-block">
+        <h2 class="profile-block-title">
+            <i data-lucide="receipt"></i>
+            Recent transactions
+        </h2>
+        <div class="tx-table-wrap">
+            <table class="tx-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th class="tx-amount">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in transactions %}
+                    <tr>
+                        <td class="tx-date">{{ tx.date }}</td>
+                        <td>{{ tx.description }}</td>
+                        <td><span class="badge badge-{{ tx.category|lower }}">{{ tx.category }}</span></td>
+                        <td class="tx-amount">&#8377;{{ "%.2f"|format(tx.amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="auth-card profile-block">
+        <h2 class="profile-block-title">
+            <i data-lucide="pie-chart"></i>
+            Spending by category
+        </h2>
+        <div class="cat-list">
+            {% for cat in categories %}
+            <div class="cat-row badge-{{ cat.name|lower }}">
+                <span class="cat-name">{{ cat.name }}</span>
+                <div class="cat-bar">
+                    <div class="cat-bar-fill" data-percent="{{ cat.percent }}"></div>
+                </div>
+                <span class="cat-total">&#8377;{{ "%.2f"|format(cat.total) }}</span>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 
 </section>
