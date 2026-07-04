@@ -88,6 +88,46 @@ def get_user_by_email(email):
         conn.close()
 
 
+def get_user_by_id(user_id):
+    """Return the user row for the given id, or None if not found."""
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT * FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def update_user(user_id, name, email):
+    """Update a user's name and email.
+
+    Raises sqlite3.IntegrityError if the email is taken by another user.
+    """
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE users SET name = ?, email = ? WHERE id = ?",
+            (name, email, user_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def update_user_password(user_id, password):
+    """Hash the password and store it for the given user."""
+    conn = get_db()
+    try:
+        conn.execute(
+            "UPDATE users SET password_hash = ? WHERE id = ?",
+            (generate_password_hash(password), user_id),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def seed_db():
     """Insert a demo user and sample expenses. Runs only on an empty database."""
     conn = get_db()
