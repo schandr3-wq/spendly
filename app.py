@@ -1,3 +1,4 @@
+import functools
 import sqlite3
 
 from flask import (
@@ -12,7 +13,16 @@ from flask import (
 )
 from werkzeug.security import check_password_hash
 
-from database.db import create_user, get_db, get_user_by_email, init_db, seed_db
+from database.db import (
+    create_user,
+    get_db,
+    get_user_by_email,
+    get_user_by_id,
+    init_db,
+    seed_db,
+    update_user,
+    update_user_password,
+)
 
 app = Flask(__name__)
 app.secret_key = "spendly-dev-secret-key"
@@ -20,6 +30,22 @@ app.secret_key = "spendly-dev-secret-key"
 with app.app_context():
     init_db()
     seed_db()
+
+
+def login_required(view):
+    """Redirect to the login page if no user is signed in."""
+    @functools.wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get("user_id"):
+            flash("Please sign in to continue.", "error")
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def current_user():
+    """Return the signed-in user's row, or None if the account is gone."""
+    return get_user_by_id(session["user_id"])
 
 
 # ------------------------------------------------------------------ #
@@ -112,9 +138,67 @@ def logout():
     return redirect(url_for("login"))
 
 
-@app.route("/profile")
+@app.route("/profile", methods=["GET", "POST"])
+@login_required
 def profile():
-    return "Profile page — coming in Step 4"
+    user = current_user()
+    if user is None:
+        session.clear()
+        flash("Please sign in to continue.", "error")
+        return redirect(url_for("login"))
+
+    if request.method == "GET":
+        return render_template("profile.html", user=user)
+
+    if request.method != "POST":
+        abort(405)
+
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip()
+
+    if not name or not email:
+        flash("All fields are required.", "error")
+        return redirect(url_for("profile"))
+
+    try:
+        update_user(user["id"], name, email)
+    except sqlite3.IntegrityError:
+        flash("Email already registered.", "error")
+        return redirect(url_for("profile"))
+
+    session["user_name"] = name
+    flash("Account details updated.", "success")
+    return redirect(url_for("profile"))
+
+
+@app.route("/profile/password", methods=["POST"])
+@login_required
+def profile_password():
+    user = current_user()
+    if user is None:
+        session.clear()
+        flash("Please sign in to continue.", "error")
+        return redirect(url_for("login"))
+
+    current_password = request.form.get("current_password", "")
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    if not current_password or not new_password or not confirm_password:
+        flash("All fields are required.", "error")
+        return redirect(url_for("profile"))
+
+    if not check_password_hash(user["password_hash"], current_password):
+        flash("Current password is incorrect.", "error")
+        return redirect(url_for("profile"))
+
+    if new_password != confirm_password:
+        flash("Passwords do not match.", "error")
+        return redirect(url_for("profile"))
+
+    update_user_password(user["id"], new_password)
+    flash("Password updated.", "success")
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/add")
